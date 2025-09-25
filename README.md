@@ -28,4 +28,4 @@ A React-based web application that allows users to capture photos and generate t
 
 ## API Usage
 
-The app uses Google's Generative AI (Gemini) to transform photos. Make sure you have a valid API key with sufficient credits.
+The app uses Google's Generative AI (Gemini) to transform photos.
