@@ -47,8 +47,8 @@ const PhotoGallery = ({ photos, onGeneratePast, onGenerateFuture, generatingPast
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-vintage-amber mb-2">Time Travel Gallery</h2>
-        <p className="text-muted-foreground">Your journey through time</p>
+        <h2 className="text-3xl font-extrabold text-vintage-amber mb-2">Castle Gallery</h2>
+        <p className="text-muted-foreground">Retro prints and future visions</p>
       </div>
 
       <div className="space-y-8">
@@ -80,7 +80,7 @@ const PhotoGallery = ({ photos, onGeneratePast, onGenerateFuture, generatingPast
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <Clock className="w-4 h-4 text-amber-500" />
-                  <h4 className="font-semibold text-amber-500">🔙 Travelled to 1970s</h4>
+                  <h4 className="font-semibold text-amber-500">🔙 1970s Film Print</h4>
                 </div>
 
                 <div className="relative rounded-lg overflow-hidden bg-muted aspect-video flex items-center justify-center">

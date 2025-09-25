@@ -3,7 +3,8 @@ import { Camera, Clock } from 'lucide-react'
 import CameraComponent from '@/components/Camera'
 import PhotoGallery from '@/components/PhotoGallery'
 import { Button } from '@/components/ui/button'
-import { transformImageToEra } from '@/lib/genai'
+import ApiKeyPrompt from '@/components/ApiKeyPrompt'
+import { toast } from '@/hooks/use-toast'
 
 interface Photo {
   id: string
@@ -18,6 +19,7 @@ const Index = () => {
   const [currentView, setCurrentView] = useState<'camera' | 'gallery'>('camera')
   const [generatingPastIds, setGeneratingPastIds] = useState<string[]>([])
   const [generatingFutureIds, setGeneratingFutureIds] = useState<string[]>([])
+  const [showKeyPrompt, setShowKeyPrompt] = useState(false)
 
   const handleCapture = (imageSrc: string) => {
     const newPhoto: Photo = {
@@ -34,11 +36,17 @@ const Index = () => {
       setGeneratingPastIds(prev => [...prev, photoId])
       const photo = photos.find(p => p.id === photoId)
       if (!photo) return
+      const { transformImageToEra } = await import('@/lib/genai')
       const result = await transformImageToEra(photo.original, '1970')
       setPhotos(prev => prev.map(p => (p.id === photoId ? { ...p, past: result } : p)))
-    } catch (e) {
+    } catch (e: any) {
       console.error(e)
-      alert('Failed to generate 1970 version. Check API key and try again.')
+      toast({
+        title: '1970s generation failed',
+        description: String(e?.message || e),
+        variant: 'destructive'
+      })
+      if (String(e?.message || '').toLowerCase().includes('api key')) setShowKeyPrompt(true)
     } finally {
       setGeneratingPastIds(prev => prev.filter(id => id !== photoId))
     }
@@ -49,28 +57,34 @@ const Index = () => {
       setGeneratingFutureIds(prev => [...prev, photoId])
       const photo = photos.find(p => p.id === photoId)
       if (!photo) return
+      const { transformImageToEra } = await import('@/lib/genai')
       const result = await transformImageToEra(photo.original, '2070')
       setPhotos(prev => prev.map(p => (p.id === photoId ? { ...p, future: result } : p)))
-    } catch (e) {
+    } catch (e: any) {
       console.error(e)
-      alert('Failed to generate 2070 version. Check API key and try again.')
+      toast({
+        title: '2070s generation failed',
+        description: String(e?.message || e),
+        variant: 'destructive'
+      })
+      if (String(e?.message || '').toLowerCase().includes('api key')) setShowKeyPrompt(true)
     } finally {
       setGeneratingFutureIds(prev => prev.filter(id => id !== photoId))
     }
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background retro-backdrop">
       {/* Header */}
-      <header className="p-6 border-b border-border">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+      <header className="p-6 border-b border-border/50 backdrop-blur">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="relative">
               <Camera className="w-8 h-8 text-vintage-amber rotate-slow" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-vintage-amber">TimeLens</h1>
-              <p className="text-sm text-muted-foreground">AI Time Travel Camera</p>
+              <h1 className="text-3xl font-extrabold text-vintage-amber tracking-wide">TimeLens Emporium</h1>
+              <p className="text-sm text-muted-foreground">Retro Portrait Shoppe & Castle Futures</p>
             </div>
           </div>
           
@@ -91,24 +105,32 @@ const Index = () => {
               <Clock className="w-4 h-4 mr-2" />
               Gallery ({photos.length})
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowKeyPrompt(true)}
+              className="border-vintage-amber text-vintage-amber hover:bg-vintage-amber/10"
+            >
+              Set API Key
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto p-6">
+      <main className="max-w-5xl mx-auto p-6">
         {currentView === 'camera' ? (
           <div className="space-y-8">
             {/* Hero Section */}
             <div className="text-center space-y-4">
-              <h2 className="text-4xl font-bold text-vintage-amber mb-2">Travel Through Time</h2>
+              <h2 className="text-5xl font-extrabold text-vintage-amber mb-2">Vintage Castle Portraits</h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Capture the present, explore the past, and glimpse the future with our AI-powered time travel camera
+                Step into our retro atelier: capture today and we’ll handcraft 1970s film prints or 2070s neon futures
               </p>
               <div className="flex items-center justify-center space-x-6 text-sm text-vintage-amber/70">
-                <span>📸 Real-time capture</span>
-                <span>🔙 1970s retro</span>
-                <span>🚀 2070s futuristic</span>
+                <span>📸 Instant capture</span>
+                <span>🔙 1970s film grain</span>
+                <span>🏰 Castle backdrops</span>
+                <span>🚀 2070s neon</span>
               </div>
             </div>
 
@@ -144,6 +166,7 @@ const Index = () => {
           <p>✨ TimeLens - Where every moment becomes a journey through time</p>
         </div>
       </footer>
+      <ApiKeyPrompt open={showKeyPrompt} onOpenChange={setShowKeyPrompt} />
     </div>
   )
 }

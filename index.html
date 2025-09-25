@@ -18,7 +18,19 @@
   </head>
 
   <body>
+    <div id="boot-status" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;color:#111;background:#fff;z-index:9999">Loading…</div>
     <div id="root"></div>
+    <script>
+      window.__PROVIDED_API_KEY__ = "AIzaSyBE-tk9wygElRfifeNu85K-kzURs4pWHP0";
+      (function(){
+        function show(msg){
+          var el = document.getElementById('boot-status');
+          if(el){ el.textContent = msg; el.style.whiteSpace = 'pre-wrap'; }
+        }
+        window.addEventListener('error', function(e){ show('Error: '+ (e.error && e.error.stack || e.message)); });
+        window.addEventListener('unhandledrejection', function(e){ show('Unhandled: ' + (e.reason && (e.reason.stack || e.reason.message) || String(e.reason))); });
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
