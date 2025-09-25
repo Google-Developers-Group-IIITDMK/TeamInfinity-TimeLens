@@ -1,174 +1,269 @@
-import React, { useState } from 'react'
-import { Camera, Clock } from 'lucide-react'
+import React, { useState, useRef } from 'react'
+import { Camera, Image, Grid, Upload, X } from 'lucide-react'
 import CameraComponent from '@/components/Camera'
 import PhotoGallery from '@/components/PhotoGallery'
+import RetroEditor from '@/components/RetroEditor'
 import { Button } from '@/components/ui/button'
-import ApiKeyPrompt from '@/components/ApiKeyPrompt'
 import { toast } from '@/hooks/use-toast'
 
 interface Photo {
   id: string
   original: string
-  past?: string
-  future?: string
+  edited?: string
   timestamp: Date
+  name?: string
 }
 
 const Index = () => {
   const [photos, setPhotos] = useState<Photo[]>([])
-  const [currentView, setCurrentView] = useState<'camera' | 'gallery'>('camera')
-  const [generatingPastIds, setGeneratingPastIds] = useState<string[]>([])
-  const [generatingFutureIds, setGeneratingFutureIds] = useState<string[]>([])
-  const [showKeyPrompt, setShowKeyPrompt] = useState(false)
+  const [currentView, setCurrentView] = useState<'camera' | 'gallery' | 'upload'>('camera')
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [editorImage, setEditorImage] = useState<string | null>(null)
+  const [currentEditingId, setCurrentEditingId] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleCapture = (imageSrc: string) => {
     const newPhoto: Photo = {
       id: Date.now().toString(),
       original: imageSrc,
       timestamp: new Date(),
+      name: `Capture_${new Date().toLocaleString().replace(/[/\\:]/g, '-')}`
     }
     setPhotos(prev => [newPhoto, ...prev])
-    setCurrentView('gallery')
+    
+    // Automatically open the editor for the new photo
+    setCurrentEditingId(newPhoto.id)
+    setEditorImage(imageSrc)
+    setEditorOpen(true)
   }
 
-  async function handleGeneratePast(photoId: string) {
-    try {
-      setGeneratingPastIds(prev => [...prev, photoId])
-      const photo = photos.find(p => p.id === photoId)
-      if (!photo) return
-      const { transformImageToEra } = await import('@/lib/genai')
-      const result = await transformImageToEra(photo.original, '1970')
-      setPhotos(prev => prev.map(p => (p.id === photoId ? { ...p, past: result } : p)))
-    } catch (e: any) {
-      console.error(e)
-      toast({
-        title: '1970s generation failed',
-        description: String(e?.message || e),
-        variant: 'destructive'
-      })
-      if (String(e?.message || '').toLowerCase().includes('api key')) setShowKeyPrompt(true)
-    } finally {
-      setGeneratingPastIds(prev => prev.filter(id => id !== photoId))
+  const openEditor = (photoId: string) => {
+    const photo = photos.find(p => p.id === photoId)
+    if (!photo) return
+    setCurrentEditingId(photoId)
+    setEditorImage(photo.edited || photo.original)
+    setEditorOpen(true)
+  }
+  
+  const handleSaveEdit = (editedImage: string) => {
+    if (!currentEditingId) return
+    
+    setPhotos(prev => 
+      prev.map(photo => 
+        photo.id === currentEditingId 
+          ? { ...photo, edited: editedImage } 
+          : photo
+      )
+    )
+    
+    setEditorOpen(false)
+    setCurrentView('gallery')
+    toast({
+      title: "Photo Saved",
+      description: "Your retro masterpiece has been saved successfully.",
+      variant: "success"
+    })
+  }
+  
+  const closeEditor = () => {
+    setEditorOpen(false)
+    setCurrentEditingId(null)
+    if (photos.length > 0 && !photos[0].edited) {
+      setCurrentView('gallery')
     }
   }
 
-  async function handleGenerateFuture(photoId: string) {
-    try {
-      setGeneratingFutureIds(prev => [...prev, photoId])
-      const photo = photos.find(p => p.id === photoId)
-      if (!photo) return
-      const { transformImageToEra } = await import('@/lib/genai')
-      const result = await transformImageToEra(photo.original, '2070')
-      setPhotos(prev => prev.map(p => (p.id === photoId ? { ...p, future: result } : p)))
-    } catch (e: any) {
-      console.error(e)
+  // Photo deletion handler
+  const handleDeletePhoto = (photoId: string) => {
+    setPhotos(prev => prev.filter(photo => photo.id !== photoId))
+    toast({
+      title: "Photo Deleted",
+      description: "Your photo has been removed from the gallery.",
+      variant: "destructive"
+    })
+  }
+
+  // File upload handlers
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      processUploadedFile(e.target.files[0])
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(false)
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processUploadedFile(e.dataTransfer.files[0])
+    }
+  }
+
+  const processUploadedFile = (file: File) => {
+    if (!file.type.match('image.*')) {
       toast({
-        title: '2070s generation failed',
-        description: String(e?.message || e),
-        variant: 'destructive'
+        title: "Invalid File",
+        description: "Please upload an image file (JPEG, PNG, etc.)",
+        variant: "destructive"
       })
-      if (String(e?.message || '').toLowerCase().includes('api key')) setShowKeyPrompt(true)
-    } finally {
-      setGeneratingFutureIds(prev => prev.filter(id => id !== photoId))
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      if (e.target && typeof e.target.result === 'string') {
+        const newPhoto: Photo = {
+          id: Date.now().toString(),
+          original: e.target.result,
+          timestamp: new Date(),
+          name: file.name
+        }
+        setPhotos(prev => [newPhoto, ...prev])
+        
+        // Automatically open the editor for the new photo
+        setCurrentEditingId(newPhoto.id)
+        setEditorImage(e.target.result)
+        setEditorOpen(true)
+      }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click()
     }
   }
 
   return (
-    <div className="min-h-screen bg-background retro-backdrop">
-      {/* Header */}
-      <header className="p-6 border-b border-border/50 backdrop-blur">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <Camera className="w-8 h-8 text-vintage-amber rotate-slow" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-extrabold text-vintage-amber tracking-wide">TimeLens Emporium</h1>
-              <p className="text-sm text-muted-foreground">Retro Portrait Shoppe & Castle Futures</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Button
-              variant={currentView === 'camera' ? 'default' : 'outline'}
-              onClick={() => setCurrentView('camera')}
-              className="bg-vintage-amber hover:bg-vintage-amber/90 text-camera-body"
-            >
-              <Camera className="w-4 h-4 mr-2" />
-              Camera
-            </Button>
-            <Button
-              variant={currentView === 'gallery' ? 'default' : 'outline'}
-              onClick={() => setCurrentView('gallery')}
-              className="bg-vintage-amber hover:bg-vintage-amber/90 text-camera-body"
-            >
-              <Clock className="w-4 h-4 mr-2" />
-              Gallery ({photos.length})
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowKeyPrompt(true)}
-              className="border-vintage-amber text-vintage-amber hover:bg-vintage-amber/10"
-            >
-              Set API Key
-            </Button>
-          </div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 text-white flex flex-col">
+      <header className="p-6 border-b border-gray-700 flex justify-between items-center bg-gray-800/50 backdrop-blur-sm shadow-md">
+        <div>
+          <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">Time Lens Captures</h1>
+          <p className="text-sm text-gray-300">Premium Retro Photo Editor</p>
+        </div>
+        <div className="flex space-x-3">
+          <Button 
+            variant={currentView === 'camera' ? "default" : "outline"} 
+            size="sm"
+            className={`rounded-full px-4 py-2 transition-all duration-300 ${currentView === 'camera' ? 'bg-purple-600 hover:bg-purple-700' : 'hover:text-purple-400 hover:border-purple-400'}`}
+            onClick={() => setCurrentView('camera')}
+          >
+            <Camera className="h-4 w-4 mr-2" />
+            Camera
+          </Button>
+          <Button 
+            variant={currentView === 'gallery' ? "default" : "outline"} 
+            size="sm"
+            className={`rounded-full px-4 py-2 transition-all duration-300 ${currentView === 'gallery' ? 'bg-purple-600 hover:bg-purple-700' : 'hover:text-purple-400 hover:border-purple-400'}`}
+            onClick={() => setCurrentView('gallery')}
+          >
+            <Grid className="h-4 w-4 mr-2" />
+            Gallery
+          </Button>
+          <Button 
+            variant={currentView === 'upload' ? "default" : "outline"} 
+            size="sm"
+            className={`rounded-full px-4 py-2 transition-all duration-300 ${currentView === 'upload' ? 'bg-purple-600 hover:bg-purple-700' : 'hover:text-purple-400 hover:border-purple-400'}`}
+            onClick={() => setCurrentView('upload')}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Upload
+          </Button>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-5xl mx-auto p-6">
+      <div className="container mx-auto px-2 sm:px-4 py-6 sm:py-10 max-w-6xl">
+        <div className="flex justify-center mb-6 sm:mb-10">
+          <div className="flex gap-1 sm:gap-3 p-1 sm:p-1.5 bg-gray-800/80 backdrop-blur-sm rounded-full shadow-xl border border-gray-700">
+            <Button
+              variant={currentView === 'camera' ? 'default' : 'ghost'}
+              className={`${currentView === 'camera' ? 'bg-purple-600 shadow-inner' : ''} px-3 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm transition-all duration-200 rounded-full`}
+              onClick={() => setCurrentView('camera')}
+            >
+              <Camera className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+              Camera
+            </Button>
+            <Button
+              variant={currentView === 'upload' ? 'default' : 'ghost'}
+              className={`${currentView === 'upload' ? 'bg-purple-600 shadow-inner' : ''} px-3 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm transition-all duration-200 rounded-full`}
+              onClick={() => setCurrentView('upload')}
+            >
+              <Upload className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+              Upload
+            </Button>
+            <Button
+              variant={currentView === 'gallery' ? 'default' : 'ghost'}
+              className={`${currentView === 'gallery' ? 'bg-purple-600 shadow-inner' : ''} px-3 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm transition-all duration-200 rounded-full`}
+              onClick={() => setCurrentView('gallery')}
+              disabled={photos.length === 0}
+            >
+              <Grid className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+              Gallery
+            </Button>
+          </div>
+        </div>
+
         {currentView === 'camera' ? (
-          <div className="space-y-8">
-            {/* Hero Section */}
-            <div className="text-center space-y-4">
-              <h2 className="text-5xl font-extrabold text-vintage-amber mb-2">Vintage Castle Portraits</h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Step into our retro atelier: capture today and we’ll handcraft 1970s film prints or 2070s neon futures
-              </p>
-              <div className="flex items-center justify-center space-x-6 text-sm text-vintage-amber/70">
-                <span>📸 Instant capture</span>
-                <span>🔙 1970s film grain</span>
-                <span>🏰 Castle backdrops</span>
-                <span>🚀 2070s neon</span>
-              </div>
-            </div>
-
-            {/* Camera Component */}
-            <div className="flex justify-center">
-              <div className="max-w-lg w-full">
-                <CameraComponent onCapture={handleCapture} />
-              </div>
-            </div>
-
-            {/* Instructions */}
-            <div className="text-center space-y-4 text-muted-foreground">
-              <p>📸 Point your camera at something interesting and press the shutter!</p>
-              {photos.length === 0 && (
-                <p className="text-sm">Your first capture will appear in the gallery.</p>
-              )}
-            </div>
+          <CameraComponent onCapture={handleCapture} />
+        ) : currentView === 'upload' ? (
+          <div 
+            className={`border-2 border-dashed rounded-xl p-6 sm:p-12 text-center transition-all duration-200 ${
+              isDragging ? 'border-blue-500 bg-blue-900 bg-opacity-10' : 'border-gray-600 hover:border-gray-500'
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*" 
+              onChange={handleFileSelect}
+            />
+            <Image className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4 text-gray-400" />
+            <h3 className="text-lg sm:text-xl font-semibold mb-1 sm:mb-2">Upload Your Photos</h3>
+            <p className="text-sm sm:text-base text-gray-400 mb-4 sm:mb-6 max-w-md mx-auto">
+              Drag and drop your images here, or click the button below to browse your files
+            </p>
+            <Button 
+              onClick={triggerFileInput}
+              className="bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-600 hover:to-gray-800 px-4 sm:px-6 py-3 sm:py-5 text-sm sm:text-base"
+            >
+              <Upload className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+              Select Image
+            </Button>
           </div>
         ) : (
           <PhotoGallery
             photos={photos}
-            onGeneratePast={handleGeneratePast}
-            onGenerateFuture={handleGenerateFuture}
-            generatingPastIds={generatingPastIds}
-            generatingFutureIds={generatingFutureIds}
+            onEdit={openEditor}
+            onDelete={handleDeletePhoto}
           />
         )}
-      </main>
+      </div>
 
-      {/* Footer */}
-      <footer className="border-t border-border mt-12 p-6">
-        <div className="max-w-4xl mx-auto text-center text-sm text-muted-foreground">
-          <p>✨ TimeLens - Where every moment becomes a journey through time</p>
-        </div>
-      </footer>
-      <ApiKeyPrompt open={showKeyPrompt} onOpenChange={setShowKeyPrompt} />
+      {editorOpen && editorImage && (
+        <RetroEditor
+          image={editorImage}
+          onClose={closeEditor}
+          onSave={handleSaveEdit}
+        />
+      )}
     </div>
-  )
+  );
 }
 
 export default Index

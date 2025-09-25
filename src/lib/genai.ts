@@ -40,6 +40,7 @@ function buildEraPrompt(era: '1970' | '2070'): string {
 }
 
 // Perform image-to-image style transform using Gemini Image Generation
+// Deprecated remote transform; kept for reference. App now uses local editor.
 export async function transformImageToEra(dataUrl: string, era: '1970' | '2070'): Promise<string> {
   const apiKey = getEffectiveApiKey()
   if (!apiKey) throw new Error('Missing API key. Set VITE_GOOGLE_API_KEY in .env or save via settings.')
@@ -69,14 +70,14 @@ export async function transformImageToEra(dataUrl: string, era: '1970' | '2070')
     if (!res.ok) {
       throw new Error(json?.error?.message || `HTTP ${res.status}`)
     }
-    const candidate = json?.candidates?.[0]
-    const part = candidate?.content?.parts?.find((p: any) => p.inlineData)
+    type Part = { inlineData?: { data?: string } }
+    const candidate = json?.candidates?.[0] as { content?: { parts?: Part[] } }
+    const part = candidate?.content?.parts?.find((p: Part) => !!p.inlineData)
     const img = part?.inlineData?.data
     if (!img) throw new Error('No image returned from generateContent')
     return `data:image/png;base64,${img}`
-  } catch (err: any) {
-    // eslint-disable-next-line no-console
-    console.warn('Falling back to local stylizer due to AI error:', err)
+  } catch (err: unknown) {
+    console.warn('Falling back to local stylizer due to AI error:', err as Error)
     return await localStylize(dataUrl, era)
   }
 }
@@ -92,15 +93,55 @@ async function localStylize(dataUrl: string, era: '1970' | '2070'): Promise<stri
 
   // Apply base filter
   if (era === '1970') {
-    applySepia(ctx, canvas)
-    addFilmGrain(ctx, canvas, 0.15)
-    addVignette(ctx, canvas, 0.4)
-    soften(ctx, canvas)
+    applyGrayscale(ctx, canvas, 1)
+    adjustBrightnessContrast(ctx, canvas, 0.02, 0.18)
+    addFilmGrain(ctx, canvas, 0.12)
+    addVignette(ctx, canvas, 0.45)
   } else {
     applyFuturistic(ctx, canvas)
     addVignette(ctx, canvas, 0.25, 'rgba(0,255,255,0.35)')
     sharpen(ctx, canvas)
   }
+  return canvas.toDataURL('image/png')
+}
+
+export type RetroSettings = {
+  monochrome: boolean
+  brightness: number // -1..1
+  contrast: number // 0..2 where 1 is neutral
+  sepia: number // 0..1
+  grain: number // 0..0.5
+  vignette: number // 0..1
+  blur: number // 0..1
+  sharpen: number // 0..1
+}
+
+export async function applyRetroLocal(dataUrl: string, settings: Partial<RetroSettings>): Promise<string> {
+  const cfg: RetroSettings = {
+    monochrome: true,
+    brightness: 0.02,
+    contrast: 1.2,
+    sepia: 0.0,
+    grain: 0.14,
+    vignette: 0.4,
+    blur: 0.1,
+    sharpen: 0.2,
+    ...settings,
+  }
+  const img = await loadImage(dataUrl)
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+  canvas.width = img.width
+  canvas.height = img.height
+  ctx.drawImage(img, 0, 0)
+
+  if (cfg.monochrome) applyGrayscale(ctx, canvas, 1)
+  if (cfg.sepia > 0) applySepiaAmount(ctx, canvas, cfg.sepia)
+  adjustBrightnessContrast(ctx, canvas, cfg.brightness, cfg.contrast - 1)
+  if (cfg.blur > 0.01) gaussianBlur(ctx, canvas, cfg.blur)
+  if (cfg.sharpen > 0.01) sharpenScaled(ctx, canvas, cfg.sharpen)
+  if (cfg.grain > 0.01) addFilmGrain(ctx, canvas, cfg.grain)
+  if (cfg.vignette > 0.01) addVignette(ctx, canvas, cfg.vignette)
   return canvas.toDataURL('image/png')
 }
 
@@ -122,6 +163,50 @@ function applySepia(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
     d[i] = Math.min(255, 0.393 * r + 0.769 * g + 0.189 * b)
     d[i + 1] = Math.min(255, 0.349 * r + 0.686 * g + 0.168 * b)
     d[i + 2] = Math.min(255, 0.272 * r + 0.534 * g + 0.131 * b)
+  }
+  ctx.putImageData(imgData, 0, 0)
+}
+
+function applySepiaAmount(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, amount: number) {
+  const { width, height } = canvas
+  const imgData = ctx.getImageData(0, 0, width, height)
+  const d = imgData.data
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], g = d[i + 1], b = d[i + 2]
+    const sr = Math.min(255, 0.393 * r + 0.769 * g + 0.189 * b)
+    const sg = Math.min(255, 0.349 * r + 0.686 * g + 0.168 * b)
+    const sb = Math.min(255, 0.272 * r + 0.534 * g + 0.131 * b)
+    d[i] = lerp(r, sr, amount)
+    d[i + 1] = lerp(g, sg, amount)
+    d[i + 2] = lerp(b, sb, amount)
+  }
+  ctx.putImageData(imgData, 0, 0)
+}
+
+function applyGrayscale(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, amount: number) {
+  const { width, height } = canvas
+  const imgData = ctx.getImageData(0, 0, width, height)
+  const d = imgData.data
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], g = d[i + 1], b = d[i + 2]
+    const gray = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    d[i] = lerp(r, gray, amount)
+    d[i + 1] = lerp(g, gray, amount)
+    d[i + 2] = lerp(b, gray, amount)
+  }
+  ctx.putImageData(imgData, 0, 0)
+}
+
+function adjustBrightnessContrast(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, brightnessDelta: number, contrastDelta: number) {
+  const { width, height } = canvas
+  const imgData = ctx.getImageData(0, 0, width, height)
+  const d = imgData.data
+  const b = brightnessDelta * 255
+  const c = 1 + contrastDelta
+  for (let i = 0; i < d.length; i += 4) {
+    d[i] = clamp(d[i] * c + b)
+    d[i + 1] = clamp(d[i + 1] * c + b)
+    d[i + 2] = clamp(d[i + 2] * c + b)
   }
   ctx.putImageData(imgData, 0, 0)
 }
@@ -194,6 +279,11 @@ function sharpen(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
   ctx.putImageData(dst, 0, 0)
 }
 
+function sharpenScaled(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, intensity: number) {
+  const times = Math.max(1, Math.round(intensity * 2))
+  for (let i = 0; i < times; i++) sharpen(ctx, canvas)
+}
+
 function addVignette(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, strength = 0.35, color = 'black') {
   const grd = ctx.createRadialGradient(
     canvas.width / 2,
@@ -229,3 +319,24 @@ function addFilmGrain(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, 
 }
 
 function clamp(v: number) { return Math.max(0, Math.min(255, v)) }
+function lerp(a: number, b: number, t: number) { return a + (b - a) * t }
+
+function gaussianBlur(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, amount: number) {
+  // Simple stack blur approximation via multiple small blits
+  const iterations = Math.max(1, Math.round(amount * 4))
+  const { width, height } = canvas
+  const tmp = document.createElement('canvas')
+  tmp.width = width
+  tmp.height = height
+  const tctx = tmp.getContext('2d')!
+  for (let i = 0; i < iterations; i++) {
+    tctx.clearRect(0, 0, width, height)
+    tctx.drawImage(canvas, 0, 0, width, height)
+    ctx.globalAlpha = 0.5
+    ctx.drawImage(tmp, -1, 0)
+    ctx.drawImage(tmp, 1, 0)
+    ctx.drawImage(tmp, 0, -1)
+    ctx.drawImage(tmp, 0, 1)
+    ctx.globalAlpha = 1
+  }
+}
