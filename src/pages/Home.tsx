@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import memeApiService from '@/lib/memeApi';
+import { pickMemeWithOpenAI } from '@/lib/genai';
 
 const Home = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -13,17 +14,7 @@ const Home = () => {
   const navigate = useNavigate();
 
   const handleCameraClick = () => {
-    setIsLoading(true);
-    // Simulate camera processing
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Camera Ready! 📸",
-        description: "Let's snap some spicy memes!",
-        variant: "default"
-      });
-      // Navigate to camera component or show camera interface
-    }, 2000);
+    navigate('/make-meme');
   };
 
   const handleUploadClick = () => {
@@ -38,10 +29,20 @@ const Home = () => {
       setIsLoading(true);
       
       try {
-        // Use mock API for demo
-        const result = await memeApiService.mockMemeMatch(file);
-        
-        // Store result in session storage for results page
+        // Build candidates from provided/known templates
+        const candidates = await memeApiService.getMemeTemplates();
+        // Describe the photo minimally (placeholder since we don't run vision client-side here)
+        const description = 'selfie or person photo for meme matching';
+        const picked = await pickMemeWithOpenAI('funny, viral, gen z', candidates.map(c => ({ id: c.id, name: c.name, imageUrl: c.imageUrl })), description);
+        // Fallback: use first candidate if AI fails
+        const template = picked ? candidates.find(c => c.id === picked.id) || candidates[0] : candidates[0];
+        const result = {
+          userPhoto: URL.createObjectURL(file),
+          memeTemplate: template!,
+          caption: `This pic is giving *${template?.name}* energy 👀`,
+          confidence: 90,
+          matchReason: 'Selected via OpenAI scoring among known templates'
+        };
         sessionStorage.setItem('memeResult', JSON.stringify(result));
         
         setIsLoading(false);
@@ -134,7 +135,7 @@ const Home = () => {
               animation: 'gradient-shift 3s ease infinite'
             }}
           >
-            Timeless
+            Roastly
           </motion.h1>
           <motion.p 
             className="text-xl md:text-2xl font-inter font-medium text-gray-300 mb-2"

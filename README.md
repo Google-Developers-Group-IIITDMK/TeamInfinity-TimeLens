@@ -1,4 +1,4 @@
-# Timeless - Meme Matching Website 🚀
+# Roastly - Meme Matching Website 🚀
 
 A Gen Z themed meme-matching website that helps users find their perfect meme template based on their photos. Built with React, TypeScript, Tailwind CSS, and Framer Motion.
 
@@ -41,4 +41,4 @@ A Gen Z themed meme-matching website that helps users find their perfect meme te
 
 ---
 
-**Timeless** - Your pic is giving main character energy ✨
+**Roastly** - Your pic is giving main character energy ✨

@@ -50,7 +50,7 @@ const Footer = () => {
                 <span className="text-white font-bold">T</span>
               </div>
               <span className="text-xl font-poppins font-bold bg-gradient-to-r from-neon-purple to-neon-pink bg-clip-text text-transparent">
-                Timeless
+                Roastly
               </span>
             </motion.div>
             <p className="text-gray-400 text-sm mb-4">
@@ -136,7 +136,7 @@ const Footer = () => {
           viewport={{ once: true }}
         >
           <p className="text-gray-500 text-sm font-inter">
-            © 2024 Timeless. All rights reserved. | Built with React, Tailwind CSS, and lots of caffeine ☕
+            © 2024 Roastly. All rights reserved. | Built with React, Tailwind CSS, and lots of caffeine ☕
           </p>
         </motion.div>
       </div>

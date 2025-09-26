@@ -69,7 +69,7 @@ const Camera = ({ onCapture }: CameraProps) => {
           <CameraIcon className="w-12 h-12 mx-auto text-destructive" />
           <h3 className="text-lg font-semibold">Camera Access Denied</h3>
           <p className="text-muted-foreground">
-            Please allow camera access to use TimeLens
+            Please allow camera access to use Roastly
           </p>
           <Button 
             onClick={() => window.location.reload()} 
@@ -99,7 +99,7 @@ const Camera = ({ onCapture }: CameraProps) => {
           
           {/* Camera Brand */}
           <div className="absolute top-0 sm:top-1 left-1/2 transform -translate-x-1/2 text-vintage-amber font-bold text-[10px] sm:text-xs tracking-widest">
-            TimeLens
+            Roastly
           </div>
           
           {/* Hot Shoe */}

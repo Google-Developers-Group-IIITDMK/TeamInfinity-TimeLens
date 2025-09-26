@@ -86,7 +86,7 @@ const AboutPage = () => {
               animation: 'gradient-shift 3s ease infinite'
             }}
           >
-            About Timeless
+            About Roastly
           </motion.h1>
           <motion.p 
             className="text-xl md:text-2xl text-gray-300 font-inter mb-4"

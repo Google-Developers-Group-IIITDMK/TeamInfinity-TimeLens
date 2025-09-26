@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
+import MakeMeme from "./pages/MakeMeme";
 import Results from "./pages/Results";
 import Templates from "./pages/Templates";
 import About from "./pages/About";
@@ -24,7 +25,7 @@ const App = () => (
           <main className="pt-20">
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/make-meme" element={<Home />} />
+              <Route path="/make-meme" element={<MakeMeme />} />
               <Route path="/results" element={<Results />} />
               <Route path="/templates" element={<Templates />} />
               <Route path="/about" element={<About />} />

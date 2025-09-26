@@ -147,72 +147,27 @@ class MemeApiService {
    * Mock data for demo purposes
    */
   private getMockTemplates(): MemeTemplate[] {
-    return [
-      {
-        id: '1',
-        name: 'Distracted Boyfriend',
-        imageUrl: 'https://i.imgflip.com/1bij.jpg',
-        category: 'Relationship',
-        popularity: 95,
-        tags: ['relationship', 'cheating', 'distraction', 'boyfriend']
-      },
-      {
-        id: '2',
-        name: 'Drake Pointing',
-        imageUrl: 'https://i.imgflip.com/30b1.jpg',
-        category: 'Reaction',
-        popularity: 90,
-        tags: ['drake', 'pointing', 'approval', 'reaction']
-      },
-      {
-        id: '3',
-        name: 'Woman Yelling at Cat',
-        imageUrl: 'https://i.imgflip.com/345v97.jpg',
-        category: 'Argument',
-        popularity: 88,
-        tags: ['woman', 'cat', 'yelling', 'argument', 'confused']
-      },
-      {
-        id: '4',
-        name: 'This is Fine',
-        imageUrl: 'https://i.imgflip.com/26am.jpg',
-        category: 'Situational',
-        popularity: 85,
-        tags: ['fire', 'dog', 'fine', 'situational', 'acceptance']
-      },
-      {
-        id: '5',
-        name: 'Two Buttons',
-        imageUrl: 'https://i.imgflip.com/1g8my.jpg',
-        category: 'Decision',
-        popularity: 82,
-        tags: ['buttons', 'decision', 'choice', 'dilemma']
-      },
-      {
-        id: '6',
-        name: 'Expanding Brain',
-        imageUrl: 'https://i.imgflip.com/1jwhww.jpg',
-        category: 'Intelligence',
-        popularity: 80,
-        tags: ['brain', 'intelligence', 'evolution', 'progression']
-      },
-      {
-        id: '7',
-        name: 'Change My Mind',
-        imageUrl: 'https://i.imgflip.com/24y43o.jpg',
-        category: 'Debate',
-        popularity: 78,
-        tags: ['debate', 'opinion', 'change', 'mind']
-      },
-      {
-        id: '8',
-        name: 'Woman Cat',
-        imageUrl: 'https://i.imgflip.com/2/1bij.jpg',
-        category: 'Reaction',
-        popularity: 75,
-        tags: ['woman', 'cat', 'reaction', 'surprised']
-      }
+    // Mapped subset of provided dataset
+    const provided = [
+      { id:'181913649', name:'Drake Hotline Bling', url:'https://i.imgflip.com/30b1gx.jpg' },
+      { id:'87743020', name:'Two Buttons', url:'https://i.imgflip.com/1g8my4.jpg' },
+      { id:'112126428', name:'Distracted Boyfriend', url:'https://i.imgflip.com/1ur9b0.jpg' },
+      { id:'252600902', name:'Always Has Been', url:'https://i.imgflip.com/46e43q.png' },
+      { id:'188390779', name:'Woman Yelling At Cat', url:'https://i.imgflip.com/345v97.jpg' },
+      { id:'93895088', name:'Expanding Brain', url:'https://i.imgflip.com/1jwhww.jpg' },
+      { id:'61544', name:'Success Kid', url:'https://i.imgflip.com/1bhk.jpg' },
+      { id:'61579', name:'One Does Not Simply', url:'https://i.imgflip.com/1bij.jpg' },
+      { id:'129242436', name:'Change My Mind', url:'https://i.imgflip.com/24y43o.jpg' },
+      { id:'4087833', name:'Waiting Skeleton', url:'https://i.imgflip.com/2fm6x.jpg' },
     ];
+    return provided.map((m, idx) => ({
+      id: m.id,
+      name: m.name,
+      imageUrl: m.url,
+      category: ['Reaction','Decision','Relationship','Space','Argument'][idx % 5],
+      popularity: 80 + ((10 - idx) % 10),
+      tags: m.name.toLowerCase().split(/\s+/).slice(0,4)
+    }));
   }
 
   /**

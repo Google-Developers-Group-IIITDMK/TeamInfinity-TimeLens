@@ -100,7 +100,7 @@ const TemplatesPage = () => {
               animation: 'gradient-shift 3s ease infinite'
             }}
           >
-            Meme Templates
+            Roastly Templates
           </motion.h1>
           <motion.p 
             className="text-xl text-gray-300 font-inter"

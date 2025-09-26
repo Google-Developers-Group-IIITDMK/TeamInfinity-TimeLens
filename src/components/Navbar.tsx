@@ -37,7 +37,7 @@ const Navbar = () => {
                 <span className="text-white font-bold text-lg">T</span>
               </motion.div>
               <span className="text-2xl font-poppins font-black bg-gradient-to-r from-neon-purple to-neon-pink bg-clip-text text-transparent">
-                Timeless
+                Roastly
               </span>
             </Link>
           </motion.div>

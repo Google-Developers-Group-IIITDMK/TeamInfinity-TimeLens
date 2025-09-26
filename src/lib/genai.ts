@@ -1,4 +1,30 @@
 // Google GenAI helper for image-to-image transformations (1970s/2070s)
+// Also: OpenAI helper for meme template selection (Roastly)
+import OpenAI from 'openai'
+
+function getOpenAiKey(): string | undefined {
+  const vite = (import.meta as unknown as { env?: Record<string, unknown> }).env?.VITE_OPENAI_API_KEY as string | undefined
+  const stored = typeof window !== 'undefined' ? window.localStorage.getItem('VITE_OPENAI_API_KEY') || undefined : undefined
+  return vite || stored
+}
+
+export async function pickMemeWithOpenAI(captionHints: string, candidateTemplates: { id: string; name: string; imageUrl: string }[], imageDescription: string): Promise<{ id: string; name: string; imageUrl: string } | null> {
+  try {
+    const key = getOpenAiKey()
+    if (!key) throw new Error('Missing OpenAI key. Set VITE_OPENAI_API_KEY or save in localStorage.')
+    const client = new OpenAI({ apiKey: key, dangerouslyAllowBrowser: true })
+    const system = 'You are a meme sommelier. Given a user photo description and candidate meme templates, return the single best matching template id. Answer only with the id.'
+    const list = candidateTemplates.map(t => `- ${t.id}: ${t.name}`).join('\n')
+    const user = `Photo vibes: ${imageDescription}\nCandidate templates:\n${list}\nHints: ${captionHints}\nReturn only the ID.`
+    const r = await client.responses.create({ model: 'gpt-4o-mini', input: [{ role: 'system', content: system }, { role: 'user', content: user }] })
+    const text = (r as unknown as { output_text?: string })?.output_text?.trim() || ''
+    const found = candidateTemplates.find(t => t.id === text)
+    return found || candidateTemplates[0] || null
+  } catch (e) {
+    console.warn('OpenAI selection failed; falling back to first candidate', e)
+    return candidateTemplates[0] || null
+  }
+}
 // Note: For demo purposes only — this exposes the API key in the browser.
 // Put your key in a Vite env var: VITE_GOOGLE_API_KEY
 
