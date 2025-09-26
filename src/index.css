@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=Comic+Neue:wght@300;400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -415,6 +417,62 @@ All colors MUST be HSL.
 }
 
 @layer utilities {
+  /* Gen Z Styles */
+  .genz-gradient {
+    background: linear-gradient(135deg, #8B5CF6, #EC4899, #14B8A6);
+    background-size: 300% 300%;
+    animation: gradient-shift 3s ease infinite;
+  }
+  
+  .neon-glow {
+    box-shadow: 0 0 20px currentColor, 0 0 40px currentColor, 0 0 60px currentColor;
+  }
+  
+  .meme-text {
+    font-family: 'Impact', 'Arial Black', sans-serif;
+    color: white;
+    text-shadow: 2px 2px 0px #000000, -2px -2px 0px #000000, 2px -2px 0px #000000, -2px 2px 0px #000000;
+    font-weight: 900;
+    letter-spacing: 1px;
+  }
+  
+  .genz-button {
+    background: linear-gradient(135deg, #8B5CF6, #EC4899);
+    border: none;
+    border-radius: 20px;
+    padding: 12px 24px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+  }
+  
+  .genz-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
+    animation: wiggle 0.5s ease-in-out;
+  }
+  
+  .genz-card {
+    background: rgba(26, 26, 26, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+  
+  .loading-text {
+    font-family: 'Comic Neue', cursive;
+    font-weight: 700;
+    background: linear-gradient(45deg, #EC4899, #8B5CF6, #14B8A6);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gradient-shift 2s ease infinite;
+  }
+
   .retro-backdrop {
     background:
       radial-gradient(1200px 600px at -10% 0%, hsl(28 85% 20% / 0.25), transparent 60%),

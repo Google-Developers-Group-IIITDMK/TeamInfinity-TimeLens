@@ -1,31 +1,44 @@
-# Time Lens Captures
+# Timeless - Meme Matching Website 🚀
 
-A React-based web application that allows users to capture photos and generate time-travel versions using AI. Transform your photos into retro 1970s or futuristic 2070s versions.
+A Gen Z themed meme-matching website that helps users find their perfect meme template based on their photos. Built with React, TypeScript, Tailwind CSS, and Framer Motion.
 
-## Features
+## Features ✨
 
-- **Real-time Camera Capture**: Take photos directly from your webcam
-- **AI-Powered Transformations**: Generate 1970s retro and 2070s futuristic versions of your photos
-- **Photo Gallery**: View and manage all your captured and transformed photos
-- **Download Functionality**: Save your original and transformed images
-- **Modern UI**: Built with React, TypeScript, and Tailwind CSS
+- **AI-Powered Matching**: Upload a photo and get matched with the perfect meme template
+- **Gen Z Aesthetic**: Bold fonts, vibrant gradients, neon accents, and smooth animations
+- **Responsive Design**: Looks great on mobile and desktop
+- **Social Sharing**: Share your memes on Instagram, WhatsApp, X, and more
+- **Template Gallery**: Browse popular meme templates
+- **Fun Loading Screens**: Meme-themed loading animations
 
-## Technologies Used
+## Key Features Explained 🔍
 
-- **Frontend**: React 18, TypeScript, Vite
-- **UI Framework**: Shadcn/ui components with Radix UI
-- **Styling**: Tailwind CSS
-- **AI Integration**: Google Generative AI
-- **Camera**: React Webcam
-- **Icons**: Lucide React
-- **Development Tools**: Vercel for deployment, GitHub Actions for CI/CD
-## How It Works
+### Gen Z Styling
+- **Colors**: Neon purple, pink, teal with dark backgrounds
+- **Fonts**: Poppins (bold), Inter (clean), Comic Neue (playful), Impact (meme text)
+- **Animations**: Wiggle, bounce, gradient shifts, neon glows
+- **Components**: Glassmorphism cards, gradient buttons, meme-style text
 
-1. **Capture**: Use your webcam to take a photo
-2. **Transform**: Click "Generate 1970" or "Generate 2070" to create AI-transformed versions
-3. **View**: See all your photos in the gallery with their time-travel variants
-4. **Download**: Save any of the images to your device
+### Meme Matching Flow
+1. User uploads a photo or takes one with camera
+2. AI analyzes the photo and finds matching meme template
+3. Results page shows side-by-side comparison
+4. User can download or share the meme
 
-## API Usage
+### Responsive Design
+- Mobile-first approach
+- Touch-friendly buttons
+- Optimized for social media sharing
+- Smooth animations on all devices
 
-The app uses Google's Generative AI (Gemini) to transform photos.
+
+
+
+
+
+
+## Made with ❤️
+
+---
+
+**Timeless** - Your pic is giving main character energy ✨

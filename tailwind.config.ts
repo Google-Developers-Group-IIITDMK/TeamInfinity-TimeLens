@@ -13,6 +13,12 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        'poppins': ['Poppins', 'sans-serif'],
+        'inter': ['Inter', 'sans-serif'],
+        'comic-neue': ['Comic Neue', 'cursive'],
+        'impact': ['Impact', 'Arial Black', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -57,6 +63,16 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Gen Z colors
+        'neon-purple': '#8B5CF6',
+        'neon-pink': '#EC4899',
+        'neon-teal': '#14B8A6',
+        'neon-cyan': '#06B6D4',
+        'neon-green': '#10B981',
+        'neon-yellow': '#F59E0B',
+        'dark-bg': '#0A0A0A',
+        'dark-card': '#1A1A1A',
+        'dark-border': '#2A2A2A',
         // Retro camera specific colors
         camera: {
           body: "hsl(var(--camera-body))",
@@ -93,10 +109,39 @@ export default {
             height: "0",
           },
         },
+        "wiggle": {
+          "0%, 100%": { transform: "rotate(-3deg)" },
+          "50%": { transform: "rotate(3deg)" },
+        },
+        "bounce-gentle": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
+        "pulse-neon": {
+          "0%, 100%": { 
+            boxShadow: "0 0 5px currentColor, 0 0 10px currentColor, 0 0 15px currentColor",
+            opacity: "1"
+          },
+          "50%": { 
+            boxShadow: "0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor",
+            opacity: "0.8"
+          },
+        },
+        "gradient-shift": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "wiggle": "wiggle 1s ease-in-out infinite",
+        "bounce-gentle": "bounce-gentle 2s ease-in-out infinite",
+        "pulse-neon": "pulse-neon 2s ease-in-out infinite",
+        "gradient-shift": "gradient-shift 3s ease infinite",
+      },
+      backgroundSize: {
+        '300%': '300%',
       },
     },
   },
