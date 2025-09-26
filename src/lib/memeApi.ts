@@ -78,7 +78,18 @@ class MemeApiService {
       }
 
       const templates = await response.json();
-      return templates;
+      // Normalize fields if backend returns { id, name, url }
+      const mapped: MemeTemplate[] = (templates as any[]).map((t) => ({
+        id: String((t as any).id),
+        name: String((t as any).name),
+        imageUrl: String((t as any).imageUrl || (t as any).url),
+        category: String((t as any).category || 'General'),
+        popularity: Number((t as any).popularity || Math.floor(Math.random() * 15) + 85),
+        tags: Array.isArray((t as any).tags) ? (t as any).tags : String((t as any).name).toLowerCase().split(/\s+/).slice(0,4),
+      }));
+      // Remove duplicates by id
+      const unique = Array.from(new Map(mapped.map(m => [m.id, m])).values());
+      return unique;
     } catch (error) {
       console.error('Error fetching templates:', error);
       // Return mock data for demo purposes

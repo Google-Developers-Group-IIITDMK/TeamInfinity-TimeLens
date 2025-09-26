@@ -19,10 +19,11 @@ export async function pickMemeWithOpenAI(captionHints: string, candidateTemplate
     const r = await client.responses.create({ model: 'gpt-4o-mini', input: [{ role: 'system', content: system }, { role: 'user', content: user }] })
     const text = (r as unknown as { output_text?: string })?.output_text?.trim() || ''
     const found = candidateTemplates.find(t => t.id === text)
-    return found || candidateTemplates[0] || null
+    // Only return a template when there's a valid exact match; otherwise signal no override
+    return found || null
   } catch (e) {
-    console.warn('OpenAI selection failed; falling back to first candidate', e)
-    return candidateTemplates[0] || null
+    console.warn('OpenAI selection failed; preserving local choice', e)
+    return null
   }
 }
 // Note: For demo purposes only — this exposes the API key in the browser.

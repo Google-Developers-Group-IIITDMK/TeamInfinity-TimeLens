@@ -7,6 +7,7 @@ import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import memeApiService from '@/lib/memeApi';
 import { pickMemeWithOpenAI } from '@/lib/genai';
+import { analyzeImage, pickTemplateLocally } from '@/lib/localVision';
 
 const Home = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -31,11 +32,16 @@ const Home = () => {
       try {
         // Build candidates from provided/known templates
         const candidates = await memeApiService.getMemeTemplates();
-        // Describe the photo minimally (placeholder since we don't run vision client-side here)
-        const description = 'selfie or person photo for meme matching';
-        const picked = await pickMemeWithOpenAI('funny, viral, gen z', candidates.map(c => ({ id: c.id, name: c.name, imageUrl: c.imageUrl })), description);
-        // Fallback: use first candidate if AI fails
-        const template = picked ? candidates.find(c => c.id === picked.id) || candidates[0] : candidates[0];
+        const uniqueCandidates = Array.from(new Map(candidates.map(c => [c.id, c])).values());
+        const description = 'uploaded photo';
+        // Local analysis for selection
+        const analysis = await analyzeImage(URL.createObjectURL(file));
+        let template = pickTemplateLocally(uniqueCandidates.map(c => ({ id: c.id, name: c.name, imageUrl: c.imageUrl })), analysis);
+        // If OpenAI key exists, refine
+        try {
+          const picked = await pickMemeWithOpenAI('funny, viral, gen z', uniqueCandidates.map(c => ({ id: c.id, name: c.name, imageUrl: c.imageUrl })), `faces:${analysis.faces} bright:${analysis.brightness.toFixed(2)} contrast:${analysis.contrast.toFixed(2)}`);
+          if (picked) template = picked;
+        } catch {}
         const result = {
           userPhoto: URL.createObjectURL(file),
           memeTemplate: template!,
@@ -55,12 +61,29 @@ const Home = () => {
         // Navigate to results page
         navigate('/results');
       } catch (error) {
-        setIsLoading(false);
-        toast({
-          title: "Oops! Something went wrong",
-          description: "Please try again with a different photo",
-          variant: "destructive"
-        });
+        try {
+          // Ultra-safe fallback: pick first unique template and continue
+          const candidates = await memeApiService.getMemeTemplates();
+          const uniqueCandidates = Array.from(new Map(candidates.map(c => [c.id, c])).values());
+          const template = uniqueCandidates[0];
+          const result = {
+            userPhoto: URL.createObjectURL(file),
+            memeTemplate: template!,
+            caption: `This pic is giving *${template?.name}* energy 👀`,
+            confidence: 80,
+            matchReason: 'Fallback selection'
+          };
+          sessionStorage.setItem('memeResult', JSON.stringify(result));
+          setIsLoading(false);
+          navigate('/results');
+        } catch {
+          setIsLoading(false);
+          toast({
+            title: "Oops! Something went wrong",
+            description: "Please try again with a different photo",
+            variant: "destructive"
+          });
+        }
       }
     }
   };

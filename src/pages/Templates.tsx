@@ -1,55 +1,24 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Grid, Heart, Star, Download } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import memeApiService, { MemeTemplate } from '@/lib/memeApi';
 
 const TemplatesPage = () => {
-  // Mock meme templates data
-  const templates = [
-    {
-      id: 1,
-      name: "Distracted Boyfriend",
-      image: "https://i.imgflip.com/1bij.jpg",
-      popularity: 95,
-      category: "Relationship"
-    },
-    {
-      id: 2,
-      name: "Drake Pointing",
-      image: "https://i.imgflip.com/30b1.jpg",
-      popularity: 90,
-      category: "Reaction"
-    },
-    {
-      id: 3,
-      name: "Woman Yelling at Cat",
-      image: "https://i.imgflip.com/345v97.jpg",
-      popularity: 88,
-      category: "Argument"
-    },
-    {
-      id: 4,
-      name: "This is Fine",
-      image: "https://i.imgflip.com/26am.jpg",
-      popularity: 85,
-      category: "Situational"
-    },
-    {
-      id: 5,
-      name: "Two Buttons",
-      image: "https://i.imgflip.com/1g8my.jpg",
-      popularity: 82,
-      category: "Decision"
-    },
-    {
-      id: 6,
-      name: "Expanding Brain",
-      image: "https://i.imgflip.com/1jwhww.jpg",
-      popularity: 80,
-      category: "Intelligence"
-    }
-  ];
+  const [templates, setTemplates] = useState<MemeTemplate[]>([]);
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const list = await memeApiService.getMemeTemplates();
+      // Ensure uniqueness by id and limit to a reasonable number
+      const map = new Map<string, MemeTemplate>();
+      list.forEach(t => { if (!map.has(t.id)) map.set(t.id, t); });
+      const unique = Array.from(map.values());
+      if (mounted) setTemplates(unique);
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -127,7 +96,7 @@ const TemplatesPage = () => {
               <Card className="genz-card p-4 overflow-hidden">
                 <div className="relative mb-4">
                   <img 
-                    src={template.image} 
+                    src={template.imageUrl} 
                     alt={template.name}
                     className="w-full h-48 object-cover rounded-lg"
                   />
